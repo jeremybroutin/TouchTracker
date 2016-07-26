@@ -48,39 +48,12 @@ class DrawView: UIView {
 		path.stroke()
 	}
 	
-	// Create the circle
-	func strokeCircle(circle: Circle){		
-		
-		let radius: CGFloat = hypot((circle.point2.x - circle.point1.x), (circle.point2.y - circle.point1.y)) / CGFloat(2)
-		
-		let xAxis1: CGFloat = circle.point1.x
-		let xAxis2: CGFloat = circle.point2.x
-		let yAxis1: CGFloat = circle.point1.y
-		let yAxis2: CGFloat = circle.point2.y
-		
-		let xAxisMin: CGFloat = min(xAxis1, xAxis2)
-		let xAxisMax: CGFloat = max(xAxis1, xAxis2)
-		let yAxisMin: CGFloat = min(yAxis1, yAxis2)
-		let yAxisMax: CGFloat = max(yAxis1, yAxis2)
-		
-		let centerX: CGFloat = xAxisMin + ((xAxisMax - xAxisMin) / CGFloat(2))
-		let centerY: CGFloat = yAxisMin + ((yAxisMax - yAxisMin) / CGFloat(2))
-		
-		let center: CGPoint = CGPointMake(centerX, centerY)
-		
-		let path = UIBezierPath(arcCenter: center, radius: radius, startAngle: 0.0, endAngle: CGFloat(M_PI*2), clockwise: true)
-		
-		path.lineWidth = lineThickness
-		path.lineCapStyle = CGLineCap.Round
-
-		path.stroke()
-	}
-	
 	// MARK: - Drawing on the view
 	
 	// Draw the lines in the array
 	override func drawRect(rect: CGRect) {
-
+		
+		// Line
 		finishedLineColor.setStroke()
 		for line in finishedLines {
 			strokeLine(line)
@@ -109,20 +82,13 @@ class DrawView: UIView {
 		
 		// Use a loop in case touches began at the exact same time (not highly probable but just in case)
 		for touch in touches {
-			
 			let location = touch.locationInView(self)
-			
-			// Line
-			let newLine = Line(begin: location, end: location)
-			
-			// Create a NSValue instance that holds on to the address of the UITouch obj
-			// Because we should not retain to UITouch obj directly
+			// Create a NSValue instance that holds on to the address of the UITouch obj, because we should not retain to UITouch obj directly
 			// Wrapping it in an NSValue avoids creating a strong reference to the obj
 			let key = NSValue(nonretainedObject: touch)
+			let newLine = Line(begin: location, end: location)
 			currentLines[key] = newLine
-			
 		}
-		
 		// Flag the view to be redrawn at the end of the run loop
 		setNeedsDisplay()
 	}
@@ -131,11 +97,9 @@ class DrawView: UIView {
 
 		for touch in touches {
 			let key  = NSValue(nonretainedObject: touch)
-			
 			// Update line's end
 			currentLines[key]?.end = touch.locationInView(self)
 		}
-		
 		setNeedsDisplay()
 	}
 	
@@ -143,7 +107,6 @@ class DrawView: UIView {
 		
 		for touch in touches {
 			let key = NSValue(nonretainedObject: touch)
-			
 			// Line
 			if var line = currentLines[key] {
 				line.end = touch.locationInView(self)
@@ -151,9 +114,8 @@ class DrawView: UIView {
 				finishedLines.append(line)
 				currentLines.removeValueForKey(key)
 			}
-			
-			setNeedsDisplay()
 		}
+		setNeedsDisplay()
 	}
 	
 	// Finally, handle the case when the app is interrupted by the OS: touch gets canceled

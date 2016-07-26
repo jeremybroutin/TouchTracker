@@ -67,10 +67,17 @@ class DrawView: UIView {
 		
 		// Draw current lines in red (multiple touches)
 		// UIColor.redColor().setStroke() // Use IBInspectable properties instead
-		currentLineColor.setStroke()
+		// currentLineColor.setStroke() // replaced below in silver challenge
 		for (_, line) in currentLines {
+			colorFromAngle(line.angle).setStroke()
 			strokeLine(line)
 		}
+	}
+	
+	func colorFromAngle(angle: Double) -> UIColor {
+		let hue = CGFloat(angle/180) // to get a value between 0 and 1
+		return UIColor(hue: hue, saturation: 1, brightness: 1, alpha: 1)
+		
 	}
 	
 	// Concept:

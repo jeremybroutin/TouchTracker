@@ -35,6 +35,15 @@ class DrawView: UIView {
 		}
 	}
 	
+	required init?(coder aDecoder: NSCoder) {
+		super.init(coder: aDecoder)
+		
+		let doubleTapRecognizer = UITapGestureRecognizer(target: self, action: #selector(DrawView.doubleTap(_:)))
+		doubleTapRecognizer.numberOfTapsRequired = 2
+		doubleTapRecognizer.delaysTouchesBegan = true
+		addGestureRecognizer(doubleTapRecognizer)
+	}
+	
 	// MARK: - Drawing helper functions
 	
 	// Create the line
@@ -46,6 +55,16 @@ class DrawView: UIView {
 		path.moveToPoint(line.begin)
 		path.addLineToPoint(line.end)
 		path.stroke()
+	}
+	
+	// MARK: - Gesture recognizer targets
+	
+	func doubleTap(gestureRecognizer: UIGestureRecognizer){
+		print("Recognized a double tap")
+		
+		currentLines.removeAll(keepCapacity: false)
+		finishedLines.removeAll(keepCapacity: false)
+		setNeedsDisplay()
 	}
 	
 	// MARK: - Drawing on the view
@@ -80,6 +99,8 @@ class DrawView: UIView {
 	
 	override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
 		
+		print(#function)
+		
 		// Use a loop in case touches began at the exact same time (not highly probable but just in case)
 		for touch in touches {
 			let location = touch.locationInView(self)
@@ -105,6 +126,8 @@ class DrawView: UIView {
 	
 	override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
 		
+		print(#function)
+		
 		for touch in touches {
 			let key = NSValue(nonretainedObject: touch)
 			// Line
@@ -120,6 +143,8 @@ class DrawView: UIView {
 	
 	// Finally, handle the case when the app is interrupted by the OS: touch gets canceled
 	override func touchesCancelled(touches: Set<UITouch>?, withEvent event: UIEvent?) {
+		
+		print(#function)
 		
 		currentLines.removeAll()
 		

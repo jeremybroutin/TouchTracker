@@ -16,6 +16,7 @@ class DrawView: UIView {
 	// The key to store a line will be deruved from the UITouch object that the line corresponds to
 	var currentLines = [NSValue:Line]()
 	var finishedLines = [Line]()
+	var selectedLineIndex: Int?
 
 	
 	//Allow properties to be known and modified by Interface Builder
@@ -42,6 +43,30 @@ class DrawView: UIView {
 		doubleTapRecognizer.numberOfTapsRequired = 2
 		doubleTapRecognizer.delaysTouchesBegan = true
 		addGestureRecognizer(doubleTapRecognizer)
+		
+		let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(DrawView.tap(_:)))
+		tapRecognizer.delaysTouchesBegan = true
+		tapRecognizer.requireGestureRecognizerToFail(doubleTapRecognizer) // dependency: wait before claiming the single tap
+		addGestureRecognizer(tapRecognizer)
+	}
+	
+	// MARK: - Gesture recognizer targets
+	
+	func doubleTap(gestureRecognizer: UIGestureRecognizer){
+		print("Recognized a double tap")
+		
+		selectedLineIndex = nil // avoid trap if line is selected when double tapping
+		currentLines.removeAll(keepCapacity: false)
+		finishedLines.removeAll(keepCapacity: false)
+		setNeedsDisplay()
+	}
+	
+	func tap(gestureRecognizer: UIGestureRecognizer){
+		print("Recognized a tap")
+		
+		let point = gestureRecognizer.locationInView(self)
+		selectedLineIndex = indexOfLineAtPoint(point)
+		setNeedsDisplay()
 	}
 	
 	// MARK: - Drawing helper functions
@@ -57,14 +82,34 @@ class DrawView: UIView {
 		path.stroke()
 	}
 	
-	// MARK: - Gesture recognizer targets
-	
-	func doubleTap(gestureRecognizer: UIGestureRecognizer){
-		print("Recognized a double tap")
+	// Set line color based on its angle
+	func colorFromAngle(angle: Double) -> UIColor {
+		let hue = CGFloat(angle/180) // to get a value between 0 and 1
+		return UIColor(hue: hue, saturation: 1, brightness: 1, alpha: 1)
 		
-		currentLines.removeAll(keepCapacity: false)
-		finishedLines.removeAll(keepCapacity: false)
-		setNeedsDisplay()
+	}
+	
+	// Return the index of the Line closest to a specific point
+	func indexOfLineAtPoint(point: CGPoint) -> Int? {
+		
+		// Find a line close to point
+		for (index, line) in finishedLines.enumerate(){
+			let begin = line.begin
+			let end = line.end
+			
+			// Check a few points on the line
+			for t in CGFloat(0).stride(to: 1.0, by: 0.05){
+				let x = begin.x + ((end.x - begin.x) * t)
+				let y = begin.y + ((end.y - begin.y) * t)
+				
+				// If the tapped point is within 20 points, let's return this line
+				if hypot(x - point.x, y - point.y) < 20.0 {
+					return index
+				}
+			}
+		}
+		// If nothing is close enough to the tapped pointm then we did not select the line
+		return nil
 	}
 	
 	// MARK: - Drawing on the view
@@ -82,13 +127,14 @@ class DrawView: UIView {
 			colorFromAngle(line.angle).setStroke()
 			strokeLine(line)
 		}
+		
+		if let index = selectedLineIndex {
+			UIColor.greenColor().setStroke()
+			let selectedLine = finishedLines[index]
+			strokeLine(selectedLine)
+		}
 	}
 	
-	func colorFromAngle(angle: Double) -> UIColor {
-		let hue = CGFloat(angle/180) // to get a value between 0 and 1
-		return UIColor(hue: hue, saturation: 1, brightness: 1, alpha: 1)
-		
-	}
 	
 	// MARK: - UITouch tracking methods
 	

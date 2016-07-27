@@ -8,7 +8,7 @@
 
 import UIKit
 
-class DrawView: UIView {
+class DrawView: UIView, UIGestureRecognizerDelegate {
 	
 	// MARK: - Properties
 
@@ -25,6 +25,8 @@ class DrawView: UIView {
 			}
 		}
 	}
+	var moveRecognizer: UIPanGestureRecognizer! // so that we have access to it in all methods
+	var longPressRecognizer: UILongPressGestureRecognizer! // same as above for silver challenge
 
 	
 	//Allow properties to be known and modified by Interface Builder
@@ -56,6 +58,14 @@ class DrawView: UIView {
 		tapRecognizer.delaysTouchesBegan = true
 		tapRecognizer.requireGestureRecognizerToFail(doubleTapRecognizer) // dependency: wait before claiming the single tap
 		addGestureRecognizer(tapRecognizer)
+		
+		longPressRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(DrawView.longPress(_:)))
+		addGestureRecognizer(longPressRecognizer)
+		
+		moveRecognizer = UIPanGestureRecognizer(target: self, action: #selector(DrawView.moveLine(_:)))
+		moveRecognizer.delegate = self
+		moveRecognizer.cancelsTouchesInView = false // let the view also handle the touch via UIResponder methods (touchesBegan)
+		addGestureRecognizer(moveRecognizer)
 	}
 	
 	// MARK: - Gesture recognizer targets
@@ -105,6 +115,63 @@ class DrawView: UIView {
 			
 			// Redraw everything
 			setNeedsDisplay()
+		}
+	}
+	
+	func longPress(gestureRecognizer: UIGestureRecognizer){
+		print("Recognized long press")
+		
+		// Select closest line from gesture
+		if gestureRecognizer.state == .Began {
+			let point = gestureRecognizer.locationInView(self)
+			selectedLineIndex = indexOfLineAtPoint(point)
+			
+			if selectedLineIndex != nil {
+				currentLines.removeAll(keepCapacity: false)
+			}
+		}
+		// Or release the selected line
+		else if gestureRecognizer.state == .Ended {
+			selectedLineIndex = nil
+		}
+		setNeedsDisplay()
+	}
+	
+	func moveLine(gestureRecognizer: UIPanGestureRecognizer){
+		// Because we will send the gesture Recog. a method from UIPanGestureRec. class, the parameter of this ,ethod
+		// must be a ref to an instance of UIPanGestureRec.
+		
+		print("Recognized a pan")
+		
+		// Silver challenge, avoid moving line if no long press
+		if longPressRecognizer.state != .Changed {
+			return
+		}
+		
+		// I f a line is selected
+		if let index = selectedLineIndex {
+			// When the pan recognizer changes its position
+			if gestureRecognizer.state == .Changed {
+				// How far has it moved
+				let translation = gestureRecognizer.translationInView(self)
+				
+				// Add the translation to the current beginning and end points of the line
+				finishedLines[index].begin.x += translation.x
+				finishedLines[index].begin.y += translation.y
+				finishedLines[index].end.x += translation.x
+				finishedLines[index].end.y += translation.y
+				
+				// Make sure we reset the translation to zero before the next state changed iteration
+				// Otherwise the translation is getting bigger incrementaly and doesn't reflect
+				// the user's pan.
+				gestureRecognizer.setTranslation(CGPoint.zero, inView: self)
+				
+				// Re draw the screen
+				setNeedsDisplay()
+			}
+		} else {
+			// If no line selected, do nothing
+			return
 		}
 	}
 	
@@ -239,6 +306,12 @@ class DrawView: UIView {
 	// Allow this custom view class to become the first responder for the menu controller to appear
 	override func canBecomeFirstResponder() -> Bool {
 		return true
+	}
+	
+	// MARK: - UIGestureRecognizer delegate methods
+	func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWithGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+		return true
+		// only the moveRecognizer has a delegate so we can simply return true
 	}
 	
 }

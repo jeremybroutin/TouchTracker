@@ -16,7 +16,15 @@ class DrawView: UIView {
 	// The key to store a line will be deruved from the UITouch object that the line corresponds to
 	var currentLines = [NSValue:Line]()
 	var finishedLines = [Line]()
-	var selectedLineIndex: Int?
+	var selectedLineIndex: Int? {
+		didSet{
+			// Make sure the menu is not visible if selectedIndex is nil (eg: on doubleTap)
+			if selectedLineIndex == nil {
+				let menu = UIMenuController.sharedMenuController()
+				menu.setMenuVisible(false, animated: true)
+			}
+		}
+	}
 
 	
 	//Allow properties to be known and modified by Interface Builder
@@ -66,7 +74,38 @@ class DrawView: UIView {
 		
 		let point = gestureRecognizer.locationInView(self)
 		selectedLineIndex = indexOfLineAtPoint(point)
+		
+		// Grab the menu controller
+		let menu = UIMenuController.sharedMenuController()
+		if selectedLineIndex != nil {
+			//Make DrawView the target of menu item action messages
+			becomeFirstResponder()
+			
+			// Create a new Delete UIMenuItem
+			let deleteItem = UIMenuItem(title: "Delete", action: #selector(DrawView.deleteLine(_:)))
+			menu.menuItems = [deleteItem]
+			
+			// Tell the menu where it should come from and show it
+			menu.setTargetRect(CGRect(x: point.x, y: point.y, width: 2, height: 2), inView: self)
+			menu.setMenuVisible(true, animated: true)
+		}
+		else {
+			// Hide the menu if no line is selected
+			menu.setMenuVisible(false, animated: true)
+		}
+		
 		setNeedsDisplay()
+	}
+	
+	func deleteLine(sender: AnyObject){
+		// Remove the selected line from the list of finishedLines
+		if let index = selectedLineIndex {
+			finishedLines.removeAtIndex(index)
+			selectedLineIndex = nil
+			
+			// Redraw everything
+			setNeedsDisplay()
+		}
 	}
 	
 	// MARK: - Drawing helper functions
@@ -195,6 +234,11 @@ class DrawView: UIView {
 		currentLines.removeAll()
 		
 		setNeedsDisplay()
+	}
+	
+	// Allow this custom view class to become the first responder for the menu controller to appear
+	override func canBecomeFirstResponder() -> Bool {
+		return true
 	}
 	
 }

@@ -15,6 +15,9 @@ struct Line {
 	var begin = CGPoint.zero
 	var end = CGPoint.zero
 	
+	// Gold challenge: change line thickness based on drawing speed
+	var thickness: CGFloat = 0
+	
 	// Silver challnge: calculate angle btw points and set stroke color differently
 	var angle: Double {
 		let angleRadiants = Double(atan2(end.y - begin.y, end.x - begin.x))

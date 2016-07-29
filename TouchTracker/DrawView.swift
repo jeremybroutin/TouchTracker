@@ -27,8 +27,11 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 	}
 	var moveRecognizer: UIPanGestureRecognizer! // so that we have access to it in all methods
 	var longPressRecognizer: UILongPressGestureRecognizer! // same as above for silver challenge
-
+	var menu = UIMenuController.sharedMenuController() // global access to the menu
 	
+	// Gold challenge: line thickness based on drawing speed
+	var currentLineThickness: CGFloat = 0
+
 	//Allow properties to be known and modified by Interface Builder
 	@IBInspectable var finishedLineColor: UIColor = UIColor.blackColor() {
 		didSet {
@@ -85,8 +88,6 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		let point = gestureRecognizer.locationInView(self)
 		selectedLineIndex = indexOfLineAtPoint(point)
 		
-		// Grab the menu controller
-		let menu = UIMenuController.sharedMenuController()
 		if selectedLineIndex != nil {
 			//Make DrawView the target of menu item action messages
 			becomeFirstResponder()
@@ -128,11 +129,22 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 			
 			if selectedLineIndex != nil {
 				currentLines.removeAll(keepCapacity: false)
+				// Reset the menu location if visible
+				resetMenuLocationIfNecessary(point)
 			}
 		}
-		// Or release the selected line
+		// Move the menu
+		else if gestureRecognizer.state == .Changed {
+			let point = gestureRecognizer.locationInView(self)
+			resetMenuLocationIfNecessary(point)
+		}
+		// Or release the selected line (if the menu is not visible
 		else if gestureRecognizer.state == .Ended {
-			selectedLineIndex = nil
+			if menu.menuVisible {
+				return
+			} else {
+				selectedLineIndex = nil
+			}
 		}
 		setNeedsDisplay()
 	}
@@ -143,12 +155,17 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		
 		print("Recognized a pan")
 		
+		// Gold challenge: line thickness based on pan velocity
+		let velocityInView = gestureRecognizer.velocityInView(self)
+		let thicknessOffset = CGFloat(((velocityInView.x > 0 ? velocityInView.x : -velocityInView.x) + (velocityInView.y > 0 ? velocityInView.y : -velocityInView.y)) / 100) // divide by 100 to avoid going over the roof
+		currentLineThickness = currentLineThickness > lineThickness + thicknessOffset ? currentLineThickness : lineThickness + thicknessOffset
+		
 		// Silver challenge, avoid moving line if no long press
 		if longPressRecognizer.state != .Changed {
 			return
 		}
 		
-		// I f a line is selected
+		// If a line is selected
 		if let index = selectedLineIndex {
 			// When the pan recognizer changes its position
 			if gestureRecognizer.state == .Changed {
@@ -170,8 +187,14 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 				setNeedsDisplay()
 			}
 		} else {
-			// If no line selected, do nothing
+			// If no line is selected, then do nothing
 			return
+		}
+	}
+	
+	func resetMenuLocationIfNecessary(point: CGPoint) {
+		if menu.menuVisible{
+			menu.setTargetRect(CGRect(x: point.x, y: point.y, width: 2, height: 2), inView: self)
 		}
 	}
 	
@@ -180,7 +203,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 	// Create the line
 	func strokeLine(line: Line) {
 		let path = UIBezierPath()
-		path.lineWidth = lineThickness
+		path.lineWidth = line.thickness
 		path.lineCapStyle = CGLineCap.Round
 		
 		path.moveToPoint(line.begin)
@@ -259,7 +282,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 			// Create a NSValue instance that holds on to the address of the UITouch obj, because we should not retain to UITouch obj directly
 			// Wrapping it in an NSValue avoids creating a strong reference to the obj
 			let key = NSValue(nonretainedObject: touch)
-			let newLine = Line(begin: location, end: location)
+			let newLine = Line(begin: location, end: location, thickness: lineThickness)
 			currentLines[key] = newLine
 		}
 		// Flag the view to be redrawn at the end of the run loop
@@ -272,6 +295,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 			let key  = NSValue(nonretainedObject: touch)
 			// Update line's end
 			currentLines[key]?.end = touch.locationInView(self)
+			currentLines[key]?.thickness = currentLineThickness
 		}
 		setNeedsDisplay()
 	}
@@ -290,6 +314,9 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 				currentLines.removeValueForKey(key)
 			}
 		}
+		// Reset the currentLineThickness
+		currentLineThickness = 0
+		// Re draw everything
 		setNeedsDisplay()
 	}
 	
@@ -299,7 +326,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		print(#function)
 		
 		currentLines.removeAll()
-		
+		currentLineThickness = 0
 		setNeedsDisplay()
 	}
 	

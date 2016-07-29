@@ -43,7 +43,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 			setNeedsDisplay()
 		}
 	}
-	@IBInspectable var lineThickness: CGFloat = 10 {
+	@IBInspectable var lineThickness: CGFloat = 5 {
 		didSet{
 			setNeedsDisplay()
 		}
@@ -69,6 +69,13 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		moveRecognizer.delegate = self
 		moveRecognizer.cancelsTouchesInView = false // let the view also handle the touch via UIResponder methods (touchesBegan)
 		addGestureRecognizer(moveRecognizer)
+		
+		// Platinum challenge: 3 fingers swipe up to display color panel
+		let swipeUpRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(DrawView.showColorPanel(_:)))
+		swipeUpRecognizer.numberOfTouchesRequired = 3
+		swipeUpRecognizer.direction = .Up
+		swipeUpRecognizer.delaysTouchesBegan = true
+		addGestureRecognizer(swipeUpRecognizer)
 	}
 	
 	// MARK: - Gesture recognizer targets
@@ -190,6 +197,12 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 			// If no line is selected, then do nothing
 			return
 		}
+	}
+	
+	func showColorPanel(gestureRecognizer: UISwipeGestureRecognizer){
+		
+		print("Recognized a swipe")
+		
 	}
 	
 	func resetMenuLocationIfNecessary(point: CGPoint) {

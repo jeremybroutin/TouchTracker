@@ -14,6 +14,7 @@
 		E35D35851D469AEE000AF292 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E35D35831D469AEE000AF292 /* LaunchScreen.storyboard */; };
 		E35D358D1D469AF6000AF292 /* Line.swift in Sources */ = {isa = PBXBuildFile; fileRef = E35D358C1D469AF6000AF292 /* Line.swift */; };
 		E35D358F1D469B39000AF292 /* DrawView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E35D358E1D469B39000AF292 /* DrawView.swift */; };
+		E35D35961D4C233E000AF292 /* ColorsPanelView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E35D35941D4C1B06000AF292 /* ColorsPanelView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
 		E35D35861D469AEE000AF292 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E35D358C1D469AF6000AF292 /* Line.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Line.swift; sourceTree = "<group>"; };
 		E35D358E1D469B39000AF292 /* DrawView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DrawView.swift; sourceTree = "<group>"; };
+		E35D35941D4C1B06000AF292 /* ColorsPanelView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ColorsPanelView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 				E35D35861D469AEE000AF292 /* Info.plist */,
 				E35D358C1D469AF6000AF292 /* Line.swift */,
 				E35D358E1D469B39000AF292 /* DrawView.swift */,
+				E35D35941D4C1B06000AF292 /* ColorsPanelView.swift */,
 			);
 			path = TouchTracker;
 			sourceTree = "<group>";
@@ -144,6 +147,7 @@
 				E35D358D1D469AF6000AF292 /* Line.swift in Sources */,
 				E35D357D1D469AEE000AF292 /* ViewController.swift in Sources */,
 				E35D358F1D469B39000AF292 /* DrawView.swift in Sources */,
+				E35D35961D4C233E000AF292 /* ColorsPanelView.swift in Sources */,
 				E35D357B1D469AEE000AF292 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -294,6 +298,7 @@
 				E35D358B1D469AEE000AF292 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

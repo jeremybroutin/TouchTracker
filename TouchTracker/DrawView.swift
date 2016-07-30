@@ -31,7 +31,10 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 	
 	// Gold challenge: line thickness based on drawing speed
 	var currentLineThickness: CGFloat = 0
-
+	
+	// Platinum challenge: color panel to be displayed on swipe up
+	var colorPanel: ColorsPanelView!
+	
 	//Allow properties to be known and modified by Interface Builder
 	@IBInspectable var finishedLineColor: UIColor = UIColor.blackColor() {
 		didSet {
@@ -76,6 +79,13 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		swipeUpRecognizer.direction = .Up
 		swipeUpRecognizer.delaysTouchesBegan = true
 		addGestureRecognizer(swipeUpRecognizer)
+		
+		// Hide color panel
+		colorPanel = ColorsPanelView()
+		colorPanel.frame = CGRectMake(0, self.frame.size.height, self.frame.width, 150)
+		colorPanel.backgroundColor = UIColor.grayColor()
+		self.addSubview(colorPanel)
+		
 	}
 	
 	// MARK: - Gesture recognizer targets
@@ -202,6 +212,10 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 	func showColorPanel(gestureRecognizer: UISwipeGestureRecognizer){
 		
 		print("Recognized a swipe")
+		UIView.animateWithDuration(1, delay: 0, usingSpringWithDamping: 70, initialSpringVelocity: 1, options: [], animations: { 
+			self.colorPanel.frame.origin.y = self.frame.size.height - self.colorPanel.frame.size.height
+			}, completion: nil)
+		
 		
 	}
 	

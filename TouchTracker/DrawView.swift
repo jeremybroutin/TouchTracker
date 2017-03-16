@@ -20,14 +20,14 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		didSet{
 			// Make sure the menu is not visible if selectedIndex is nil (eg: on doubleTap)
 			if selectedLineIndex == nil {
-				let menu = UIMenuController.sharedMenuController()
+				let menu = UIMenuController.shared
 				menu.setMenuVisible(false, animated: true)
 			}
 		}
 	}
 	var moveRecognizer: UIPanGestureRecognizer! // so that we have access to it in all methods
 	var longPressRecognizer: UILongPressGestureRecognizer! // same as above for silver challenge
-	var menu = UIMenuController.sharedMenuController() // global access to the menu
+	var menu = UIMenuController.shared // global access to the menu
 	
 	// Gold challenge: line thickness based on drawing speed
 	var currentLineThickness: CGFloat = 0
@@ -36,12 +36,12 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 	var colorPanel: ColorsPanelView!
 	
 	//Allow properties to be known and modified by Interface Builder
-	@IBInspectable var finishedLineColor: UIColor = UIColor.blackColor() {
+	@IBInspectable var finishedLineColor: UIColor = UIColor.black {
 		didSet {
 			setNeedsDisplay()
 		}
 	}
-	@IBInspectable var currentLineColor: UIColor = UIColor.redColor() {
+	@IBInspectable var currentLineColor: UIColor = UIColor.red {
 		didSet {
 			setNeedsDisplay()
 		}
@@ -62,7 +62,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		
 		let tapRecognizer = UITapGestureRecognizer(target: self, action: #selector(DrawView.tap(_:)))
 		tapRecognizer.delaysTouchesBegan = true
-		tapRecognizer.requireGestureRecognizerToFail(doubleTapRecognizer) // dependency: wait before claiming the single tap
+		tapRecognizer.require(toFail: doubleTapRecognizer) // dependency: wait before claiming the single tap
 		addGestureRecognizer(tapRecognizer)
 		
 		longPressRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(DrawView.longPress(_:)))
@@ -73,36 +73,38 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		moveRecognizer.cancelsTouchesInView = false // let the view also handle the touch via UIResponder methods (touchesBegan)
 		addGestureRecognizer(moveRecognizer)
 		
-		// Platinum challenge: 3 fingers swipe up to display color panel
-		let swipeUpRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(DrawView.showColorPanel(_:)))
-		swipeUpRecognizer.numberOfTouchesRequired = 3
-		swipeUpRecognizer.direction = .Up
-		swipeUpRecognizer.delaysTouchesBegan = true
-		addGestureRecognizer(swipeUpRecognizer)
-		
-		// Hide color panel
-		colorPanel = ColorsPanelView()
-		colorPanel.frame = CGRectMake(0, self.frame.size.height, self.frame.width, 150)
-		colorPanel.backgroundColor = UIColor.grayColor()
-		self.addSubview(colorPanel)
+//		// Platinum challenge: 3 fingers swipe up to display color panel
+//		let swipeUpRecognizer = UISwipeGestureRecognizer(target: self, action: #selector(DrawView.showColorPanel(_:)))
+//		swipeUpRecognizer.numberOfTouchesRequired = 3
+//		swipeUpRecognizer.direction = .up
+//		swipeUpRecognizer.delaysTouchesBegan = true
+//		addGestureRecognizer(swipeUpRecognizer)
+//		
+//		// Hide color panel
+//		colorPanel = ColorsPanelView()
+//		colorPanel.frame = CGRect(x: 0, y: self.frame.size.height, width: self.frame.width, height: 150)
+//		colorPanel.backgroundColor = UIColor.gray
+//		self.addSubview(colorPanel)
 		
 	}
 	
 	// MARK: - Gesture recognizer targets
 	
-	func doubleTap(gestureRecognizer: UIGestureRecognizer){
+	// Double tap: delete all
+	func doubleTap(_ gestureRecognizer: UIGestureRecognizer){
 		print("Recognized a double tap")
 		
 		selectedLineIndex = nil // avoid trap if line is selected when double tapping
-		currentLines.removeAll(keepCapacity: false)
-		finishedLines.removeAll(keepCapacity: false)
+		currentLines.removeAll(keepingCapacity: false)
+		finishedLines.removeAll(keepingCapacity: false)
 		setNeedsDisplay()
 	}
 	
-	func tap(gestureRecognizer: UIGestureRecognizer){
+	// Single tap: show delete option for closest single line
+	func tap(_ gestureRecognizer: UIGestureRecognizer){
 		print("Recognized a tap")
 		
-		let point = gestureRecognizer.locationInView(self)
+		let point = gestureRecognizer.location(in: self)
 		selectedLineIndex = indexOfLineAtPoint(point)
 		
 		if selectedLineIndex != nil {
@@ -114,7 +116,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 			menu.menuItems = [deleteItem]
 			
 			// Tell the menu where it should come from and show it
-			menu.setTargetRect(CGRect(x: point.x, y: point.y, width: 2, height: 2), inView: self)
+			menu.setTargetRect(CGRect(x: point.x, y: point.y, width: 2, height: 2), in: self)
 			menu.setMenuVisible(true, animated: true)
 		}
 		else {
@@ -125,10 +127,12 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		setNeedsDisplay()
 	}
 	
-	func deleteLine(sender: AnyObject){
+	// MARK: - Gestures helper functions
+	
+	func deleteLine(_ sender: AnyObject){
 		// Remove the selected line from the list of finishedLines
 		if let index = selectedLineIndex {
-			finishedLines.removeAtIndex(index)
+			finishedLines.remove(at: index)
 			selectedLineIndex = nil
 			
 			// Redraw everything
@@ -136,28 +140,28 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		}
 	}
 	
-	func longPress(gestureRecognizer: UIGestureRecognizer){
+	func longPress(_ gestureRecognizer: UIGestureRecognizer){
 		print("Recognized long press")
 		
 		// Select closest line from gesture
-		if gestureRecognizer.state == .Began {
-			let point = gestureRecognizer.locationInView(self)
+		if gestureRecognizer.state == .began {
+			let point = gestureRecognizer.location(in: self)
 			selectedLineIndex = indexOfLineAtPoint(point)
 			
 			if selectedLineIndex != nil {
-				currentLines.removeAll(keepCapacity: false)
+				currentLines.removeAll(keepingCapacity: false)
 				// Reset the menu location if visible
 				resetMenuLocationIfNecessary(point)
 			}
 		}
 		// Move the menu
-		else if gestureRecognizer.state == .Changed {
-			let point = gestureRecognizer.locationInView(self)
+		else if gestureRecognizer.state == .changed {
+			let point = gestureRecognizer.location(in: self)
 			resetMenuLocationIfNecessary(point)
 		}
 		// Or release the selected line (if the menu is not visible
-		else if gestureRecognizer.state == .Ended {
-			if menu.menuVisible {
+		else if gestureRecognizer.state == .ended {
+			if menu.isMenuVisible {
 				return
 			} else {
 				selectedLineIndex = nil
@@ -166,28 +170,28 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		setNeedsDisplay()
 	}
 	
-	func moveLine(gestureRecognizer: UIPanGestureRecognizer){
+	func moveLine(_ gestureRecognizer: UIPanGestureRecognizer){
 		// Because we will send the gesture Recog. a method from UIPanGestureRec. class, the parameter of this ,ethod
 		// must be a ref to an instance of UIPanGestureRec.
 		
 		print("Recognized a pan")
 		
 		// Gold challenge: line thickness based on pan velocity
-		let velocityInView = gestureRecognizer.velocityInView(self)
+		let velocityInView = gestureRecognizer.velocity(in: self)
 		let thicknessOffset = CGFloat(((velocityInView.x > 0 ? velocityInView.x : -velocityInView.x) + (velocityInView.y > 0 ? velocityInView.y : -velocityInView.y)) / 100) // divide by 100 to avoid going over the roof
 		currentLineThickness = currentLineThickness > lineThickness + thicknessOffset ? currentLineThickness : lineThickness + thicknessOffset
 		
 		// Silver challenge, avoid moving line if no long press
-		if longPressRecognizer.state != .Changed {
+		if longPressRecognizer.state != .changed {
 			return
 		}
 		
 		// If a line is selected
 		if let index = selectedLineIndex {
 			// When the pan recognizer changes its position
-			if gestureRecognizer.state == .Changed {
+			if gestureRecognizer.state == .changed {
 				// How far has it moved
-				let translation = gestureRecognizer.translationInView(self)
+				let translation = gestureRecognizer.translation(in: self)
 				
 				// Add the translation to the current beginning and end points of the line
 				finishedLines[index].begin.x += translation.x
@@ -198,7 +202,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 				// Make sure we reset the translation to zero before the next state changed iteration
 				// Otherwise the translation is getting bigger incrementaly and doesn't reflect
 				// the user's pan.
-				gestureRecognizer.setTranslation(CGPoint.zero, inView: self)
+				gestureRecognizer.setTranslation(CGPoint.zero, in: self)
 				
 				// Re draw the screen
 				setNeedsDisplay()
@@ -209,52 +213,52 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		}
 	}
 	
-	func showColorPanel(gestureRecognizer: UISwipeGestureRecognizer){
+	func showColorPanel(_ gestureRecognizer: UISwipeGestureRecognizer){
 		
 		print("Recognized a swipe")
-		UIView.animateWithDuration(1, delay: 0, usingSpringWithDamping: 70, initialSpringVelocity: 1, options: [], animations: { 
+		UIView.animate(withDuration: 1, delay: 0, usingSpringWithDamping: 70, initialSpringVelocity: 1, options: [], animations: { 
 			self.colorPanel.frame.origin.y = self.frame.size.height - self.colorPanel.frame.size.height
 			}, completion: nil)
 		
 		
 	}
 	
-	func resetMenuLocationIfNecessary(point: CGPoint) {
-		if menu.menuVisible{
-			menu.setTargetRect(CGRect(x: point.x, y: point.y, width: 2, height: 2), inView: self)
+	func resetMenuLocationIfNecessary(_ point: CGPoint) {
+		if menu.isMenuVisible{
+			menu.setTargetRect(CGRect(x: point.x, y: point.y, width: 2, height: 2), in: self)
 		}
 	}
 	
 	// MARK: - Drawing helper functions
 	
 	// Create the line
-	func strokeLine(line: Line) {
+	func strokeLine(_ line: Line) {
 		let path = UIBezierPath()
 		path.lineWidth = line.thickness
-		path.lineCapStyle = CGLineCap.Round
+		path.lineCapStyle = CGLineCap.round
 		
-		path.moveToPoint(line.begin)
-		path.addLineToPoint(line.end)
+		path.move(to: line.begin)
+		path.addLine(to: line.end)
 		path.stroke()
 	}
 	
 	// Set line color based on its angle
-	func colorFromAngle(angle: Double) -> UIColor {
+	func colorFromAngle(_ angle: Double) -> UIColor {
 		let hue = CGFloat(angle/180) // to get a value between 0 and 1
 		return UIColor(hue: hue, saturation: 1, brightness: 1, alpha: 1)
 		
 	}
 	
 	// Return the index of the Line closest to a specific point
-	func indexOfLineAtPoint(point: CGPoint) -> Int? {
+	func indexOfLineAtPoint(_ point: CGPoint) -> Int? {
 		
 		// Find a line close to point
-		for (index, line) in finishedLines.enumerate(){
+		for (index, line) in finishedLines.enumerated(){
 			let begin = line.begin
 			let end = line.end
 			
 			// Check a few points on the line
-			for t in CGFloat(0).stride(to: 1.0, by: 0.05){
+			for t in stride(from: CGFloat(0), to: 1.0, by: 0.05){
 				let x = begin.x + ((end.x - begin.x) * t)
 				let y = begin.y + ((end.y - begin.y) * t)
 				
@@ -271,7 +275,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 	// MARK: - Drawing on the view
 	
 	// Draw the lines in the array
-	override func drawRect(rect: CGRect) {
+	override func draw(_ rect: CGRect) {
 		
 		// Line
 		finishedLineColor.setStroke()
@@ -285,7 +289,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		}
 		
 		if let index = selectedLineIndex {
-			UIColor.greenColor().setStroke()
+			UIColor.green.setStroke()
 			let selectedLine = finishedLines[index]
 			strokeLine(selectedLine)
 		}
@@ -299,13 +303,13 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 	// Touch moves: update the Line's end
 	// Touch ends: Line is complete
 	
-	override func touchesBegan(touches: Set<UITouch>, withEvent event: UIEvent?) {
+	override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
 		
 		print(#function)
 		
 		// Use a loop in case touches began at the exact same time (not highly probable but just in case)
 		for touch in touches {
-			let location = touch.locationInView(self)
+			let location = touch.location(in: self)
 			// Create a NSValue instance that holds on to the address of the UITouch obj, because we should not retain to UITouch obj directly
 			// Wrapping it in an NSValue avoids creating a strong reference to the obj
 			let key = NSValue(nonretainedObject: touch)
@@ -316,18 +320,18 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 		setNeedsDisplay()
 	}
 	
-	override func touchesMoved(touches: Set<UITouch>, withEvent event: UIEvent?) {
+	override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
 
 		for touch in touches {
 			let key  = NSValue(nonretainedObject: touch)
 			// Update line's end
-			currentLines[key]?.end = touch.locationInView(self)
+			currentLines[key]?.end = touch.location(in: self)
 			currentLines[key]?.thickness = currentLineThickness
 		}
 		setNeedsDisplay()
 	}
 	
-	override func touchesEnded(touches: Set<UITouch>, withEvent event: UIEvent?) {
+	override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
 		
 		print(#function)
 		
@@ -335,10 +339,10 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 			let key = NSValue(nonretainedObject: touch)
 			// Line
 			if var line = currentLines[key] {
-				line.end = touch.locationInView(self)
+				line.end = touch.location(in: self)
 				
 				finishedLines.append(line)
-				currentLines.removeValueForKey(key)
+				currentLines.removeValue(forKey: key)
 			}
 		}
 		// Reset the currentLineThickness
@@ -348,7 +352,7 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 	}
 	
 	// Finally, handle the case when the app is interrupted by the OS: touch gets canceled
-	override func touchesCancelled(touches: Set<UITouch>?, withEvent event: UIEvent?) {
+	override func touchesCancelled(_ touches: Set<UITouch>, with event: UIEvent?) {
 		
 		print(#function)
 		
@@ -358,12 +362,12 @@ class DrawView: UIView, UIGestureRecognizerDelegate {
 	}
 	
 	// Allow this custom view class to become the first responder for the menu controller to appear
-	override func canBecomeFirstResponder() -> Bool {
+	override var canBecomeFirstResponder : Bool {
 		return true
 	}
 	
 	// MARK: - UIGestureRecognizer delegate methods
-	func gestureRecognizer(gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWithGestureRecognizer otherGestureRecognizer: UIGestureRecognizer) -> Bool {
+	func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith otherGestureRecognizer: UIGestureRecognizer) -> Bool {
 		return true
 		// only the moveRecognizer has a delegate so we can simply return true
 	}

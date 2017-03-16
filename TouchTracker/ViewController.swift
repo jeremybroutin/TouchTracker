@@ -9,17 +9,26 @@
 import UIKit
 
 class ViewController: UIViewController {
+	
+	@IBOutlet var helpTextLabel: UILabel!
+	@IBOutlet var helpViewBottomConstraint: NSLayoutConstraint!
 
 	override func viewDidLoad() {
 		super.viewDidLoad()
-		// Do any additional setup after loading the view, typically from a nib.
+		setHelpText()
+		closeHelpView(UIButton())
 	}
 
-	override func didReceiveMemoryWarning() {
-		super.didReceiveMemoryWarning()
-		// Dispose of any resources that can be recreated.
+	func setHelpText() {
+		helpTextLabel.text = "Drag your fingers to draw lines.\nTap once to select a line.\nLong press to drag and drop a line.\nDouble tap to delete alll ines."
 	}
 
-
+	@IBAction func openHelpView(_ sender: UIButton) {
+		helpViewBottomConstraint.constant = 0
+	}
+	@IBAction func closeHelpView(_ sender: UIButton) {
+		helpViewBottomConstraint.constant = 2000
+	}
+	
 }
 
